@@ -10,41 +10,34 @@
 #ifndef EDK2_SBI_H_
 #define EDK2_SBI_H_
 
-#include <include/sbi/riscv_asm.h> // Reference to header file in opensbi
 #include <RiscVImpl.h>
+#include <sbi/riscv_asm.h> // Reference to header file in opensbi
+#include <sbi/sbi_ecall_interface.h>
+#include <sbi/sbi_error.h>
 #include <sbi/sbi_types.h>  // Reference to header file wrapper
 
-#define SBI_SUCCESS                    0
-#define SBI_ERR_FAILED                -1
-#define SBI_ERR_NOT_SUPPORTED         -2
-#define SBI_ERR_INVALID_PARAM         -3
-#define SBI_ERR_DENIED                -4
-#define SBI_ERR_INVALID_ADDRESS       -5
-#define SBI_ERR_ALREADY_AVAILABLE     -6
+// Translation from OpenSBI constants to SBI names
+#define SBI_SUCCESS               SBI_OK
+#define SBI_ERR_FAILED            SBI_EFAIL
+#define SBI_ERR_NOT_SUPPORTED     SBI_ENOTSUPP
+#define SBI_ERR_INVALID_PARAM     SBI_EINVAL
+#define SBI_ERR_DENIED            SBI_DENIED
+#define SBI_ERR_INVALID_ADDRESS   SBI_INVALID_ADDR
+#define SBI_ERR_ALREADY_AVAILABLE -6
 
-#define SBI_BASE_EXT                   0x10
-#define SBI_HSM_EXT                    0x48534D
-#define SBI_TIME_EXT                   0x54494D45
-#define SBI_IPI_EXT                    0x735049
-#define SBI_RFNC_EXT                   0x52464E43
+// Included in OpenSBI 0.7
+// Can be removed, once we upgrade
+#define SBI_EXT_HSM               0x48534D
+#define SBI_EXT_HSM_HART_START    0x0
+#define SBI_EXT_HSM_HART_STOP     0x1
+#define SBI_EXT_HSM_HART_GET_STATUS 0x2
 
 //
 // Below two definitions should be defined in OpenSBI.
+// Submitted to upstream, waiting for merge and release.
 //
 #define SBI_EXT_FIRMWARE_CODE_BASE_START 0x0A000000
 #define SBI_EXT_FIRMWARE_CODE_BASE_END   0x0AFFFFFF
-
-#define SBI_GET_SPEC_VERSION_FUNC      0
-#define SBI_GET_IMPL_ID_FUNC           1
-#define SBI_GET_IMPL_VERSION_FUNC      2
-#define SBI_PROBE_EXTENSION_FUNC       3
-#define SBI_GET_MVENDORID_FUNC         4
-#define SBI_GET_MARCHID_FUNC           5
-#define SBI_GET_MIMPID_FUNC            6
-
-#define SBI_HART_START_FUNC            0
-#define SBI_HART_STOP_FUNC             1
-#define SBI_HART_GET_STATUS_FUNC       2
 
 #define RISC_V_MAX_HART_SUPPORTED 16
 
