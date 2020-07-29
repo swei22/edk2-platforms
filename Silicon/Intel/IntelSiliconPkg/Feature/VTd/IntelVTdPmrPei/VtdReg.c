@@ -13,10 +13,15 @@
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/CacheMaintenanceLib.h>
+#include <Library/PeiServicesLib.h>
 #include <IndustryStandard/Vtd.h>
 #include <Ppi/VtdInfo.h>
 
 #include "IntelVTdPmrPei.h"
+
+EFI_GUID gVTdNullRootEntryTableGuid = {
+  0x3de0593f, 0x6e3e, 0x4542, { 0xa1, 0xcb, 0xcb, 0xb2, 0xdb, 0xeb, 0xd8, 0xff }
+};
 
 /**
   Flush VTD page table and context table memory.
@@ -242,6 +247,51 @@ DisableDmar (
   MmioWrite64 (VtdUnitBaseAddress + R_RTADDR_REG, 0);
 
   DEBUG ((DEBUG_INFO,"VTD () Disabled!<<<<<<\n"));
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Enable VTd translation table protection in pre-memory phase.
+
+  @param VTdInfo            The VTd engine context information.
+  @param EngineMask         The mask of the VTd engine to be accessed.
+
+  @retval EFI_SUCCESS       DMAR translation protection is enabled.
+  @retval EFI_UNSUPPORTED   Null Root Entry Table is not supported.
+**/
+EFI_STATUS
+PreMemoryEnableVTdTranslationProtection (
+  IN VTD_INFO      *VTdInfo,
+  IN UINT64        EngineMask
+  )
+{
+  EFI_STATUS                  Status;
+  UINTN                       Index;
+  UINT64                      *RootEntryTable;
+
+  DEBUG ((DEBUG_INFO, "PreMemoryEnableVTdTranslationProtection - 0x%lx\n", EngineMask));
+
+  Status = PeiServicesLocatePpi (
+                 &gVTdNullRootEntryTableGuid,
+                 0,
+                 NULL,
+                 (VOID **)&RootEntryTable
+                 );
+
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "Locate NullRootEntryTable Ppi : %r\n", Status));
+    return EFI_UNSUPPORTED;
+  }
+
+  DEBUG ((DEBUG_INFO, "NullRootEntryTable - 0x%lx\n", *RootEntryTable));
+
+  for (Index = 0; Index < VTdInfo->VTdEngineCount; Index++) {
+    if ((EngineMask & LShiftU64(1, Index)) == 0) {
+      continue;
+    }
+    EnableDmar ((UINTN)VTdInfo->VTdEngineAddress[Index], (UINTN)*RootEntryTable);
+  }
 
   return EFI_SUCCESS;
 }
