@@ -164,6 +164,17 @@ EFI_PEI_PPI_DESCRIPTOR mPlatformVTdNoIgdInfoSampleDesc = {
   &mPlatformVTdNoIgdSample
 };
 
+EFI_GUID gVTdNullRootEntryTableGuid = { 0x3de0593f, 0x6e3e, 0x4542, { 0xa1, 0xcb, 0xcb, 0xb2, 0xdb, 0xeb, 0xd8, 0xff }};
+
+// BIOS uses TE with a null root entry table to block VT-d engine access to block any DMA traffic in pre-memory phase.
+UINT64 mNullRootEntryTable = 0xFED20000;
+
+EFI_PEI_PPI_DESCRIPTOR mPlatformNullRootEntryTableDesc = {
+  (EFI_PEI_PPI_DESCRIPTOR_PPI | EFI_PEI_PPI_DESCRIPTOR_TERMINATE_LIST),
+  &gVTdNullRootEntryTableGuid,
+  &mNullRootEntryTable
+};
+
 /**
   Initialize VTd register.
   Initialize the VTd hardware unit which has INCLUDE_PCI_ALL set
@@ -348,6 +359,11 @@ PlatformVTdInfoSampleInitialize (
   if (!SiliconInitialized) {
     Status = PeiServicesNotifyPpi (&mSiliconInitializedNotifyList);
     InitGlobalVtd ();
+
+    Status = PeiServicesInstallPpi (&mPlatformNullRootEntryTableDesc);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR , "Failed to install the NullRootEntryTable ppi - %r\n", Status));
+    }
 
     Status = PeiServicesInstallPpi (&mPlatformVTdNoIgdInfoSampleDesc);
     ASSERT_EFI_ERROR (Status);
